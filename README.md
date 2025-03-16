@@ -22,11 +22,12 @@ This project is a reimplementation of the original Student Resources Platform, s
   - **Ratings/Upvotes (#2)**: Upvote button and count via `resource_ratings` table, integrated in `/resources`.
   - **Tutor Verification (#3)**: "✅" badge for verified users, admin dashboard (`Admin.tsx`) with `/admin/verify/:user_id` route.
   - **Resource Preview (#4)**: "Preview" button shows first 200 chars of files in a modal (`Resources.tsx`, `/resources/:id/preview` route).
+  - **YouTube Links**: Add educational video URLs (e.g., `https://www.youtube.com/watch?v=...`) in `AddResource.tsx`, displayed as red "YouTube" links in `Resources.tsx`.
 
 ## Running the Project
 - **Frontend**: `npm start -- --port 3001` (runs on `http://localhost:3001`).
 - **Backend**: `node server.js` in `backend/` (runs on `http://localhost:3000`).
-- **Database**: MySQL `student_resources` with tables: `users`, `resources`, `comments`, `tags`, `resource_tags`, `resource_ratings`.
+- **Database**: MySQL `student_resources` with tables: `users`, `resources` (now with `youtube_url`), `comments`, `tags`, `resource_tags`, `resource_ratings`.
 - **Setup**: Ensure Node.js (v22.13.1), npm, and MySQL are installed; run `npm install` in root and `backend/`.
 
 ## Next Steps
