@@ -1,20 +1,21 @@
-# Student Resources Platform (React Version)
+# Student Resources Platform
 
-This project is a reimplementation of the original Student Resources Platform, switching from Vue.js to React. Below is why I made the switch:
+## Original Vue Version (March 14, 2025)
+- Multi-page Vue CLI app with Vue Router.
+- Backend with Node.js/Express, MySQL (`student_resources`), file uploads.
+- Features: CRUD, user auth, file uploads, comments.
 
-## Why I Switched from Vue to React
-
-- **Popularity and Ecosystem**: React is the most widely used frontend framework (around 40-45% adoption vs. Vue’s 15-20% as of 2025 trends), offering a massive ecosystem with more libraries, tools, and community support. I wanted to tap into that for future scalability.
-- **Developer Experience**: React’s JSX and hooks felt more intuitive for me compared to Vue’s template syntax, especially for managing state and side effects in a project like this with dynamic resource lists and forms.
-- **Job Market**: React skills are in higher demand, and switching aligns with my career goals—more opportunities to flex this muscle!
-- **Performance and Flexibility**: While Vue’s lightweight nature was great, React’s virtual DOM and flexibility for custom UI (like the sleek cards here) gave me a snappier feel that I couldn’t resist.
-- **A Fresh Start**: The Vue project was solid, but I hit some styling snags with Tailwind. React gave me a clean slate to rebuild it better, and damn, it looks way cooler now!
-
-## Project Features
-- Multi-page app with React Router: Home, Resources, Add Resource, Login/Register.
-- Backend reused from Vue project, connected to `student_resources` MySQL database.
-- Inline styles for a polished, modern UI—gradient backgrounds, shadowed cards, and vibrant buttons.
+## React Version (March 16, 2025)
+- Switched to React for a fresh, modern frontend.
+- **Why the Switch**:
+  - **Popularity**: React’s ~40-45% adoption vs. Vue’s 15-20% offers a bigger ecosystem.
+  - **Dev Experience**: JSX and hooks felt snappier than Vue templates.
+  - **Career**: More React jobs out there.
+  - **Performance**: Virtual DOM and flexibility for slick UIs.
+  - **Fresh Start**: Vue had styling hiccups; React looks way better now!
+- Reuses original backend with `student_resources` database.
+- Inline styles: gradient backgrounds, shadowed cards, vibrant buttons.
 
 ## Running the Project
-- Frontend: `npm start -- --port 3001` (runs on `http://localhost:3001`).
-- Backend: `node server.js` in `backend/` (runs on `http://localhost:3000`).
+- Frontend: `npm start -- --port 3001` (`http://localhost:3001`).
+- Backend: `node server.js` in `backend/` (`http://localhost:3000`).
