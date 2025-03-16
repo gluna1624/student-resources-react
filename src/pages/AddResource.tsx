@@ -6,6 +6,8 @@ const AddResource: React.FC = () => {
   const [description, setDescription] = useState('');
   const [subject, setSubject] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
 
@@ -18,6 +20,17 @@ const AddResource: React.FC = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) setFile(e.target.files[0]);
+  };
+
+  const handleTagAdd = () => {
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput('');
+    }
+  };
+
+  const handleTagRemove = (tag: string) => {
+    setTags(tags.filter(t => t !== tag));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -34,12 +47,25 @@ const AddResource: React.FC = () => {
       body: formData,
     })
       .then(response => response.json())
-      .then(() => {
-        setTitle('');
-        setDescription('');
-        setSubject('');
-        setFile(null);
-        navigate('/resources');
+      .then(data => {
+        // Add tags for the new resource
+        Promise.all(tags.map(tagName =>
+          fetch(`http://localhost:3000/resources/${data.id}/tags`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ tagName }),
+          })
+        ))
+          .then(() => {
+            setTitle('');
+            setDescription('');
+            setSubject('');
+            setFile(null);
+            setTags([]);
+            navigate('/resources');
+          })
+          .catch(error => console.error('Error adding tags:', error));
       })
       .catch(error => console.error('Error adding resource:', error));
   };
@@ -81,6 +107,48 @@ const AddResource: React.FC = () => {
               placeholder="Subject area"
               style={{ width: '100%', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '0.25rem' }}
             />
+          </div>
+          <div>
+            <label style={{ color: '#1f2937', fontWeight: 'bold' }}>Tags</label>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+              {tags.map(tag => (
+                <span
+                  key={tag}
+                  style={{
+                    backgroundColor: '#e5e7eb',
+                    padding: '0.25rem 0.5rem',
+                    borderRadius: '0.25rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                  }}
+                >
+                  {tag}
+                  <button
+                    onClick={() => handleTagRemove(tag)}
+                    style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="text"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                placeholder="Add a tag"
+                style={{ padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '0.25rem', flex: 1 }}
+              />
+              <button
+                type="button"
+                onClick={handleTagAdd}
+                style={{ backgroundColor: '#2563eb', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}
+              >
+                Add Tag
+              </button>
+            </div>
           </div>
           <div>
             <label style={{ color: '#1f2937', fontWeight: 'bold' }}>File (PDF, TXT, DOCX)</label>

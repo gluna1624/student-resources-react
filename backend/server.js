@@ -8,7 +8,7 @@ const app = express();
 const port = 3000;
 
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+    res.header('Access-Control-Allow-Origin', 'http://localhost:3001');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type');
     res.header('Access-Control-Allow-Credentials', 'true');
@@ -54,16 +54,23 @@ db.connect((err) => {
 
 app.get('/resources', (req, res) => {
     const query = `
-        SELECT r.*, u.username 
+        SELECT r.*, u.username, u.verified, GROUP_CONCAT(t.name) as tags, COUNT(rr.id) as upvotes
         FROM resources r 
         LEFT JOIN users u ON r.user_id = u.id
+        LEFT JOIN resource_tags rt ON r.id = rt.resource_id
+        LEFT JOIN tags t ON rt.tag_id = t.id
+        LEFT JOIN resource_ratings rr ON r.id = rr.resource_id
+        GROUP BY r.id
     `;
     db.query(query, (err, results) => {
         if (err) {
             console.error('Database error:', err);
             return res.status(500).send('Database error: ' + err.sqlMessage);
         }
-	console.log('Resources query results:', results);  // Debug log
+        results.forEach(resource => {
+            resource.tags = resource.tags ? resource.tags.split(',') : [];
+            resource.upvotes = parseInt(resource.upvotes) || 0;
+        });
         res.json(results);
     });
 });
@@ -202,4 +209,121 @@ app.post('/register', (req, res) => {
     });
 });
 
+// Get comments for a resource
+app.get('/resources/:id/comments', (req, res) => {
+    const resourceId = req.params.id;
+    const query = `
+        SELECT c.*, u.username 
+        FROM comments c 
+        LEFT JOIN users u ON c.user_id = u.id 
+        WHERE c.resource_id = ?
+    `;
+    db.query(query, [resourceId], (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).send('Database error: ' + err.sqlMessage);
+        }
+        res.json(results);
+    });
+});
+
+// Add a comment to a resource
+app.post('/resources/:id/comments', (req, res) => {
+    const resourceId = req.params.id;
+    const { content } = req.body;
+    const userId = req.session.user ? req.session.user.id : null;
+    if (!userId) return res.status(401).json({ error: 'Not logged in' });
+    db.query(
+        'INSERT INTO comments (resource_id, user_id, content) VALUES (?, ?, ?)',
+        [resourceId, userId, content],
+        (err, result) => {
+            if (err) {
+                console.error('Error adding comment:', err);
+                return res.status(500).send('Error adding comment');
+            }
+            const newComment = {
+                id: result.insertId,
+                resource_id: parseInt(resourceId),
+                user_id: userId,
+                content,
+                created_at: new Date().toISOString(),
+                username: req.session.user.username,
+            };
+            res.status(201).json(newComment);
+        }
+    );
+});
+app.post('/resources/:id/rate', (req, res) => {
+    const resourceId = req.params.id;
+    const userId = req.session.user ? req.session.user.id : null;
+    if (!userId) return res.status(401).json({ error: 'Not logged in' });
+
+    db.query(
+        'INSERT INTO resource_ratings (resource_id, user_id, value) VALUES (?, ?, 1) ON DUPLICATE KEY UPDATE value = 1',
+        [resourceId, userId],
+        (err, result) => {
+            if (err) {
+                console.error('Error adding rating:', err);
+                return res.status(500).json({ error: err.message });
+            }
+            db.query(
+                'SELECT COUNT(id) as upvotes FROM resource_ratings WHERE resource_id = ?',
+                [resourceId],
+                (err, countResult) => {
+                    if (err) return res.status(500).json({ error: err.message });
+                    res.status(201).json({ resourceId: parseInt(resourceId), upvotes: countResult[0].upvotes });
+                }
+            );
+        }
+    );
+});
+// Middleware to check if user is admin (basic for now, expand later)
+const isAdmin = (req, res, next) => {
+    if (req.session.user && req.session.user.username === 'gvl718') {  // Replace with your admin username
+        next();
+    } else {
+        res.status(403).json({ error: 'Admin access required' });
+    }
+};
+
+app.put('/admin/verify/:user_id', isAdmin, (req, res) => {
+    const userId = req.params.user_id;
+    db.query('UPDATE users SET verified = TRUE WHERE id = ?', [userId], (err, result) => {
+        if (err) {
+            console.error('Error verifying user:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json({ message: 'User verified successfully', userId: parseInt(userId) });
+    });
+});
+const fs = require('fs');
+
+app.get('/resources/:id/preview', (req, res) => {
+    const resourceId = req.params.id;
+    db.query('SELECT file_path FROM resources WHERE id = ?', [resourceId], (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        if (results.length === 0 || !results[0].file_path) {
+            return res.status(404).json({ error: 'File not found' });
+        }
+        const filePath = path.join(__dirname, results[0].file_path);
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ error: 'File not found on server' });
+        }
+        // Simple text preview (first 200 chars) - expand for PDFs later if needed
+        fs.readFile(filePath, 'utf8', (err, data) => {
+            if (err) {
+                console.error('File read error:', err);
+                return res.status(500).json({ error: 'Error reading file' });
+            }
+            const preview = data.substring(0, 200);  // Adjust length as needed
+            res.json({ preview });
+        });
+    });
+});
 app.listen(port, () => console.log(`Server running at http://localhost:${port}`));
