@@ -8,6 +8,7 @@ interface Resource {
   user_id: number | null;
   created_at: string;
   file_path: string | null;
+  youtube_url: string | null;
   username: string | null;
   tags: string[];
   upvotes: number;
@@ -232,6 +233,16 @@ const Resources: React.FC = () => {
                           Preview
                         </button>
                       </>
+                    )}
+                    {resource.youtube_url && (
+                      <a
+                        href={resource.youtube_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: '#ff0000', marginLeft: '0.5rem', textDecoration: 'underline' }}
+                      >
+                        YouTube
+                      </a>
                     )}
                   </span>
                   <button

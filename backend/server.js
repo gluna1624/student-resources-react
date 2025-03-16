@@ -76,12 +76,12 @@ app.get('/resources', (req, res) => {
 });
 
 app.post('/resources', upload.single('file'), (req, res) => {
-    const { title, description, subject } = req.body;
+    const { title, description, subject, youtube_url } = req.body;
     const userId = req.session.user ? req.session.user.id : null;
     const filePath = req.file ? `/uploads/${req.file.filename}` : null;
     console.log('POST /resources - User ID:', userId, 'Session:', req.session.user, 'File:', filePath);
-    db.query('INSERT INTO resources (title, description, subject, user_id, file_path) VALUES (?, ?, ?, ?, ?)', 
-        [title, description, subject, userId, filePath], 
+    db.query('INSERT INTO resources (title, description, subject, user_id, file_path, youtube_url) VALUES (?, ?, ?, ?, ?, ?)', 
+        [title, description, subject, userId, filePath, youtube_url || null], 
         (err, result) => {
             if (err) {
                 console.error('Error adding resource:', err);
@@ -93,6 +93,7 @@ app.post('/resources', upload.single('file'), (req, res) => {
                     description, 
                     subject, 
                     file_path: filePath, 
+                    youtube_url: youtube_url || null,
                     user_id: userId, 
                     created_at: new Date().toISOString() 
                 };

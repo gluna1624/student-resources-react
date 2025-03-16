@@ -8,6 +8,7 @@ const AddResource: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
+  const [youtubeUrl, setYoutubeUrl] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
 
@@ -40,6 +41,7 @@ const AddResource: React.FC = () => {
     formData.append('description', description);
     formData.append('subject', subject);
     if (file) formData.append('file', file);
+    formData.append('youtube_url', youtubeUrl);
 
     fetch('http://localhost:3000/resources', {
       method: 'POST',
@@ -48,7 +50,6 @@ const AddResource: React.FC = () => {
     })
       .then(response => response.json())
       .then(data => {
-        // Add tags for the new resource
         Promise.all(tags.map(tagName =>
           fetch(`http://localhost:3000/resources/${data.id}/tags`, {
             method: 'POST',
@@ -63,6 +64,7 @@ const AddResource: React.FC = () => {
             setSubject('');
             setFile(null);
             setTags([]);
+            setYoutubeUrl('');
             navigate('/resources');
           })
           .catch(error => console.error('Error adding tags:', error));
@@ -151,7 +153,17 @@ const AddResource: React.FC = () => {
             </div>
           </div>
           <div>
-            <label style={{ color: '#1f2937', fontWeight: 'bold' }}>File (PDF, TXT, DOCX)</label>
+            <label style={{ color: '#1f2937', fontWeight: 'bold' }}>YouTube Video URL (optional)</label>
+            <input
+              type="url"
+              value={youtubeUrl}
+              onChange={(e) => setYoutubeUrl(e.target.value)}
+              placeholder="e.g., https://www.youtube.com/watch?v=..."
+              style={{ width: '100%', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '0.25rem' }}
+            />
+          </div>
+          <div>
+            <label style={{ color: '#1f2937', fontWeight: 'bold' }}>File (PDF, TXT, DOCX, optional)</label>
             <input
               type="file"
               onChange={handleFileChange}
